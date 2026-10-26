@@ -32,7 +32,7 @@ function import_osxcross_environment()
   else
     export BASE_DIR=$PWD
     export TARBALL_DIR=$PWD/tarballs
-    export BUILD_DIR=$PWD/build
+    export BUILD_DIR=${BUILD_DIR:-$PWD/build}
     export TARGET_DIR=${TARGET_DIR:-$BASE_DIR/target}
     export TARGET_DIR_SDK_TOOLS=$TARGET_DIR/SDK/tools
     export PATCH_DIR=$PWD/patches
@@ -551,6 +551,34 @@ function build_msg()
 #
 # f_res=1 = build the project
 # f_res=0 = skip the project
+function apply_host_patch()
+{
+  local patch=$PATCH_DIR/$1-msys.patch
+  local directory=${2:-.}
+
+  if [[ $PLATFORM == MSYS* ]] && [ -f "$patch" ]; then
+    if ! git -C "$directory" apply --reverse --check "$patch" &>/dev/null; then
+      git -C "$directory" apply "$patch"
+    fi
+  fi
+}
+
+function make_native_symlinks()
+{
+  local link target
+
+  if [[ $PLATFORM != MSYS* ]]; then
+    return 0
+  fi
+
+  find "$1" -type l | while read -r link; do
+    target=$(readlink "$link")
+    rm -f "$link"
+    MSYS=winsymlinks:nativestrict ln -s "$target" "$link" 2>/dev/null ||
+      ln -s "$target" "$link"
+  done
+}
+
 function get_sources()
 {
   local url="$1"

@@ -36,6 +36,9 @@
 #include <cassert>
 #include <unistd.h>
 #include <sys/wait.h>
+#ifdef __CYGWIN__
+#include <sys/cygwin.h>
+#endif
 
 #include "tools.h"
 #include "target.h"
@@ -507,6 +510,17 @@ int main(int argc, char **argv) {
   std::string escapedexecpath;
   escapePath(target.execpath, escapedexecpath);
   concatEnvVariable("COMPILER_PATH", escapedexecpath);
+#elif defined(__CYGWIN__)
+  if (char *windowspath = static_cast<char *>(
+          cygwin_create_path(CCP_POSIX_TO_WIN_A, target.execpath))) {
+    std::string compilerpath = windowspath;
+    free(windowspath);
+    if (const char *oldval = getenv("COMPILER_PATH")) {
+      compilerpath += ";";
+      compilerpath += oldval;
+    }
+    setenv("COMPILER_PATH", compilerpath.c_str(), 1);
+  }
 #else
   concatEnvVariable("COMPILER_PATH", target.execpath);
 #endif

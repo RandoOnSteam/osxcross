@@ -1,0 +1,124 @@
+diff --git a/cctools/configure b/cctools/configure
+index 4601db7..3d3c13b 100755
+--- a/cctools/configure
++++ b/cctools/configure
+@@ -3146,10 +3146,6 @@ else
+ fi
+ 
+   ;;
+-  cygwin* )
+-    echo "Cygwin is no longer supported." 1>&2
+-    exit 1
+-  ;;
+ esac
+ 
+ if test "x$CC" = "x"; then
+diff --git a/cctools/configure.ac b/cctools/configure.ac
+index ad18301..60cc975 100644
+--- a/cctools/configure.ac
++++ b/cctools/configure.ac
+@@ -37,10 +37,6 @@ case $host_os in
+     isdarwin=yes
+     AM_CONDITIONAL([ISDARWIN], [true])
+   ;;
+-  cygwin* )
+-    echo "Cygwin is no longer supported." 1>&2
+-    exit 1
+-  ;;
+ esac
+ 
+ if test "x$CC" = "x"; then
+diff --git a/cctools/include/foreign/dlfcn.h b/cctools/include/foreign/dlfcn.h
+index 57bbec7..258ea4c 100644
+--- a/cctools/include/foreign/dlfcn.h
++++ b/cctools/include/foreign/dlfcn.h
+@@ -2,18 +2,4 @@
+ #define __CCTOOLS_PORT_DLFCN_H__
+ #include_next <dlfcn.h>
+ #include <stdio.h> /* stderr */
+-#ifdef __CYGWIN__
+-typedef struct dl_info {
+-    const char  *dli_fname;
+-    void        *dli_fbase;
+-    const char  *dli_sname;
+-    void        *dli_saddr;
+-} Dl_info;
+-
+-static inline int dladdr(void *addr, Dl_info *info)
+-{
+-    fprintf(stderr, "dladdr() not implemented\n");
+-    return 0;
+-}
+-#endif /* __CYGWIN__ */
+ #endif /* __CCTOOLS_PORT_DLFCN_H__ */
+diff --git a/cctools/include/foreign/i386/_types.h b/cctools/include/foreign/i386/_types.h
+index 8f5330d..f7e291d 100644
+--- a/cctools/include/foreign/i386/_types.h
++++ b/cctools/include/foreign/i386/_types.h
+@@ -70,11 +70,7 @@ typedef unsigned long long int  __uint64_t;
+ #endif
+ 
+ typedef long                    __darwin_intptr_t;
+-#ifdef __CYGWIN__
+-typedef unsigned long           __darwin_natural_t;
+-#else
+ typedef unsigned int            __darwin_natural_t;
+-#endif
+ 
+ /*
+  * The rune type below is declared to be an ``int'' instead of the more natural
+diff --git a/cctools/include/foreign/machine/types.h b/cctools/include/foreign/machine/types.h
+index 25afcaa..deced13 100644
+--- a/cctools/include/foreign/machine/types.h
++++ b/cctools/include/foreign/machine/types.h
+@@ -29,7 +29,12 @@
+  * Copyright 1995 NeXT Computer, Inc. All rights reserved.
+  */
+ #if defined(__CYGWIN__)
++#ifndef _SYS_TYPES_H
++#include <sys/types.h>
++#elif !defined(__CCTOOLS_PORT_MACHINE_TYPES_H__)
++#define __CCTOOLS_PORT_MACHINE_TYPES_H__
+ #include_next <machine/types.h>
++#endif
+ #else
+ #ifndef _BSD_MACHINE_TYPES_H_
+ #define _BSD_MACHINE_TYPES_H_
+diff --git a/cctools/include/sys/cdefs.h b/cctools/include/sys/cdefs.h
+index 61e4e8b..aeddc9f 100644
+--- a/cctools/include/sys/cdefs.h
++++ b/cctools/include/sys/cdefs.h
+@@ -1,5 +1,6 @@
+ #if defined(__GLIBC__) || defined(__APPLE__) || defined(__FreeBSD__) || \
+-    defined(__OpenBSD__) || defined(__NetBSD__) || defined(__ANDROID__)
++    defined(__OpenBSD__) || defined(__NetBSD__) || defined(__ANDROID__) || \
++    defined(__CYGWIN__)
+ 
+ #include_next <sys/cdefs.h>
+ 
+diff --git a/cctools/ld64/src/3rd/BlocksRuntime/data.c b/cctools/ld64/src/3rd/BlocksRuntime/data.c
+index b4eb02e..0fe3f6b 100644
+--- a/cctools/ld64/src/3rd/BlocksRuntime/data.c
++++ b/cctools/ld64/src/3rd/BlocksRuntime/data.c
+@@ -39,3 +39,8 @@ void * _NSConcreteWeakBlockVariable[32] = { 0 };
+ 
+ void _Block_copy_error(void) {
+ }
++
++#ifdef __CYGWIN__
++void *__imp__NSConcreteStackBlock = _NSConcreteStackBlock;
++void *__imp__NSConcreteGlobalBlock = _NSConcreteGlobalBlock;
++#endif
+diff --git a/cctools/ld64/src/3rd/BlocksRuntime/runtime.c b/cctools/ld64/src/3rd/BlocksRuntime/runtime.c
+index a059c22..38bedf4 100644
+--- a/cctools/ld64/src/3rd/BlocksRuntime/runtime.c
++++ b/cctools/ld64/src/3rd/BlocksRuntime/runtime.c
+@@ -698,3 +698,8 @@ const char *_Block_byref_dump(struct Block_byref *src) {
+     return buffer;
+ }
+ 
++
++#ifdef __CYGWIN__
++void *__imp__Block_object_assign = (void *)(uintptr_t)_Block_object_assign;
++void *__imp__Block_object_dispose = (void *)(uintptr_t)_Block_object_dispose;
++#endif

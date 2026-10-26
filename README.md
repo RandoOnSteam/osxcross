@@ -1,3 +1,6 @@
+## RandoOnSteam changes:
+
+I made changes and cmake additions to make it build on and for windows using MSYS
 
 ## macOS Cross-Toolchain for Linux and \*BSD
 
@@ -210,6 +213,7 @@ xcrun lipo -create test.x86_64 test.arm64 -output test
 ### Deployment Target
 
 Default:
+
 * SDK ≤ 10.13 → macOS 10.6
 * SDK ≥ 10.14 → macOS 10.9
 * SDK ≥ 14.0 → macOS 10.13

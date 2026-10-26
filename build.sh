@@ -267,6 +267,7 @@ function build_stable()
 
     if [ $f_res -eq 1 ]; then
       pushd $CURRENT_BUILD_PROJECT_NAME &>/dev/null
+      apply_host_patch apple-libtapi
       INSTALLPREFIX=$TARGET_DIR ./build.sh
       ./install.sh
       popd &>/dev/null
@@ -283,6 +284,7 @@ function build_stable()
     $CCTOOLS_VERSION-ld64-$LINKER_VERSION
 
   if [ $f_res -eq 1 ]; then
+    apply_host_patch cctools-port $CURRENT_BUILD_PROJECT_NAME
     pushd $CURRENT_BUILD_PROJECT_NAME/cctools &>/dev/null
     echo ""
 
@@ -337,6 +339,7 @@ function build_latest()
 
     if [ $f_res -eq 1 ]; then
       pushd $CURRENT_BUILD_PROJECT_NAME &>/dev/null
+      apply_host_patch apple-libtapi
       INSTALLPREFIX=$TARGET_DIR ./build.sh
       ./install.sh
       popd &>/dev/null
@@ -353,6 +356,7 @@ function build_latest()
     $CCTOOLS_VERSION-ld64-$LINKER_VERSION
 
   if [ $f_res -eq 1 ]; then
+    apply_host_patch cctools-port $CURRENT_BUILD_PROJECT_NAME
     pushd $CURRENT_BUILD_PROJECT_NAME/cctools &>/dev/null
     echo ""
 
@@ -510,6 +514,8 @@ if [ ! -d "$SDK_DIR/MacOSX$SDK_VERSION.sdk" ]; then
   echo "Broken SDK! '$SDK_DIR/MacOSX$SDK_VERSION.sdk' does not exist!"
   exit 1
 fi
+
+make_native_symlinks "$SDK_DIR/MacOSX$SDK_VERSION.sdk"
 
 ## Fix broken SDKs ##
 
