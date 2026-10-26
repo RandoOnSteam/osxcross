@@ -39,3 +39,27 @@ endforeach()
 
 add_custom_target(osxcross ALL)
 add_dependencies(osxcross ${toolchains})
+
+function(osxcross_package name flavor)
+  set(package "${CMAKE_BINARY_DIR}/${name}.zip")
+  set(stage "${CMAKE_BINARY_DIR}/package-${flavor}")
+  add_custom_command(
+    OUTPUT "${package}"
+    COMMAND ${CMAKE_COMMAND} -E env
+      MSYSTEM=MSYS CHERE_INVOKING=1 MSYS2_PATH_TYPE=minimal
+      "${MSYS2_ROOT}/usr/bin/bash.exe" -lc
+      "sh '${CMAKE_SOURCE_DIR}/tools/package_windows.sh' \"$(cygpath -u '${OSXCROSS_TARGET_ROOT}')\" \"$(cygpath -u '${stage}/osxcross')\" ${flavor}"
+    COMMAND ${CMAKE_COMMAND} -E rm -f "${package}"
+    COMMAND ${CMAKE_COMMAND} -E chdir "${stage}" ${CMAKE_COMMAND} -E tar cf "${package}" --format=zip osxcross
+    DEPENDS ${toolchains}
+      "${CMAKE_SOURCE_DIR}/tools/package_windows.sh"
+      "${CMAKE_SOURCE_DIR}/tools/copy_resolved.py"
+      "${CMAKE_SOURCE_DIR}/tools/install-sdk.cmake"
+      "${CMAKE_SOURCE_DIR}/tools/README.windows.txt"
+    USES_TERMINAL
+    VERBATIM)
+  add_custom_target(osxcross-package-${flavor} DEPENDS "${package}")
+endfunction()
+
+osxcross_package(osxcross-windows-x86_64 private)
+osxcross_package(osxcross-windows-x86_64-nosdk public)
