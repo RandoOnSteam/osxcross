@@ -545,4 +545,8 @@ constexpr const char *getStdLibString(StdLib stdlib) {
   return StdLibNames[stdlib];
 }
 
+#ifdef __CYGWIN__
+void useWindowsCommandLine(int &argc, char **&argv);
+#endif
+
 } // namespace tools

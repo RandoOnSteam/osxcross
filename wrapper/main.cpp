@@ -476,6 +476,10 @@ int main(int argc, char **argv) {
   char **cargs = nullptr;
   int rc = -1;
 
+#ifdef __CYGWIN__
+  useWindowsCommandLine(argc, argv);
+#endif
+
   if (char *p = getenv("OCDEBUG"))
     debug = atoi(p);
 

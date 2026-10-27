@@ -488,3 +488,98 @@ OSVersion parseOSVersion(const char *OSVer) {
 }
 
 } // namespace tools
+
+#ifdef __CYGWIN__
+#define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
+#include <windows.h>
+
+namespace tools {
+
+static std::vector<std::string> windowsArguments;
+static std::vector<char *> windowsArgv;
+
+static std::string toUtf8(const std::wstring &text) {
+  if (text.empty())
+    return std::string();
+  int size = WideCharToMultiByte(CP_UTF8, 0, text.c_str(), (int)text.size(),
+                                 nullptr, 0, nullptr, nullptr);
+  std::string result(size, '\0');
+  WideCharToMultiByte(CP_UTF8, 0, text.c_str(), (int)text.size(), &result[0],
+                      size, nullptr, nullptr);
+  return result;
+}
+
+void useWindowsCommandLine(int &argc, char **&argv) {
+  if (getppid() != 1)
+    return;
+
+  const wchar_t *p = GetCommandLineW();
+  std::vector<std::wstring> arguments;
+
+  if (*p == L'"') {
+    ++p;
+    while (*p && *p != L'"')
+      ++p;
+    if (*p)
+      ++p;
+  } else {
+    while (*p && *p != L' ' && *p != L'\t')
+      ++p;
+  }
+
+  for (;;) {
+    while (*p == L' ' || *p == L'\t')
+      ++p;
+    if (!*p)
+      break;
+
+    std::wstring argument;
+    bool quoted = false;
+
+    while (*p && (quoted || (*p != L' ' && *p != L'\t'))) {
+      size_t backslashes = 0;
+      while (*p == L'\\') {
+        ++backslashes;
+        ++p;
+      }
+      if (*p == L'"') {
+        argument.append(backslashes / 2, L'\\');
+        if (backslashes % 2) {
+          argument += L'"';
+          ++p;
+        } else if (quoted && p[1] == L'"') {
+          argument += L'"';
+          p += 2;
+        } else {
+          quoted = !quoted;
+          ++p;
+        }
+      } else {
+        argument.append(backslashes, L'\\');
+        if (*p && (quoted || (*p != L' ' && *p != L'\t'))) {
+          argument += *p;
+          ++p;
+        }
+      }
+    }
+
+    arguments.push_back(argument);
+  }
+
+  windowsArguments.clear();
+  windowsArguments.push_back(argv[0]);
+  for (const std::wstring &argument : arguments)
+    windowsArguments.push_back(toUtf8(argument));
+
+  windowsArgv.clear();
+  for (std::string &argument : windowsArguments)
+    windowsArgv.push_back(&argument[0]);
+  windowsArgv.push_back(nullptr);
+
+  argc = (int)windowsArguments.size();
+  argv = windowsArgv.data();
+}
+
+} // namespace tools
+#endif

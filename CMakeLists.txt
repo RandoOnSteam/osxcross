@@ -19,6 +19,7 @@ msys2_bootstrap(
   mingw-w64-ucrt-x86_64-llvm-tools)
 
 set(toolchains)
+set(stamps)
 foreach(version IN LISTS OSXCROSS_SDK_VERSIONS)
   set(target "${OSXCROSS_TARGET_ROOT}/${version}")
   set(stamp "${CMAKE_BINARY_DIR}/osxcross-${version}.stamp")
@@ -35,6 +36,7 @@ foreach(version IN LISTS OSXCROSS_SDK_VERSIONS)
     VERBATIM)
   add_custom_target(osxcross-${version} DEPENDS "${stamp}")
   list(APPEND toolchains osxcross-${version})
+  list(APPEND stamps "${stamp}")
 endforeach()
 
 add_custom_target(osxcross ALL)
@@ -51,7 +53,7 @@ function(osxcross_package name flavor)
       "sh '${CMAKE_SOURCE_DIR}/tools/package_windows.sh' \"$(cygpath -u '${OSXCROSS_TARGET_ROOT}')\" \"$(cygpath -u '${stage}/osxcross')\" ${flavor}"
     COMMAND ${CMAKE_COMMAND} -E rm -f "${package}"
     COMMAND ${CMAKE_COMMAND} -E chdir "${stage}" ${CMAKE_COMMAND} -E tar cf "${package}" --format=zip osxcross
-    DEPENDS ${toolchains}
+    DEPENDS ${toolchains} ${stamps}
       "${CMAKE_SOURCE_DIR}/tools/package_windows.sh"
       "${CMAKE_SOURCE_DIR}/tools/copy_resolved.py"
       "${CMAKE_SOURCE_DIR}/tools/install-sdk.cmake"

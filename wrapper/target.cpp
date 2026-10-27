@@ -369,14 +369,14 @@ void Target::setCompilerPath() {
       compilerpath += compilername;
       compilerexecname = compilername;
     } else {
-      if (!findExecutableInPath(compilername.c_str(), compilerpath, ignoreCCACHE)) {
-        compilerpath = compilername;
 #ifdef __CYGWIN__
-        std::string hostcompiler = "/ucrt64/bin/" + compilername + ".exe";
-        if (fileExists(hostcompiler))
-          compilerpath = hostcompiler;
+      std::string hostcompiler = "/ucrt64/bin/" + compilername + ".exe";
+      if (fileExists(hostcompiler))
+        compilerpath = hostcompiler;
+      else
 #endif
-      }
+      if (!findExecutableInPath(compilername.c_str(), compilerpath, ignoreCCACHE))
+        compilerpath = compilername;
 
       compilerexecname += compilername;
     }
